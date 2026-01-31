@@ -20,6 +20,9 @@
 #include <sink.hpp>
 #include <iomanip>
 
+#define ESC "\x1B"
+
+
 // other includes as needed here
 
 // Define the name of the plugin
@@ -65,7 +68,7 @@ public:
 
     if (topic == "agent_event")
       return return_type::retry;
-    cout << "\033[2J\033[0;0H";
+    cout << ESC"[1J" ESC"[H";
     cout << "Seen " << _timings.size() << " agents:" << endl;
     for (const auto &[k, v] : _timings) {
       cout << "  " << k << ": " << v << endl;
