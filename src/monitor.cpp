@@ -13,15 +13,16 @@
 */
 
 // Mandatory included headers
+#include <array>
 #include <chrono>
+#include <iomanip>
 #include <map>
 #include <nlohmann/json.hpp>
 #include <pugg/Kernel.h>
+#include <rang.hpp>
 #include <sink.hpp>
-#include <iomanip>
 
 #define ESC "\x1B"
-
 
 // other includes as needed here
 
@@ -32,24 +33,34 @@
 
 // Load the namespaces
 using namespace std;
+using namespace rang;
 using json = nlohmann::json;
 
 struct TimingData {
   chrono::system_clock::time_point last = chrono::system_clock::now();
-  string machine;
+  string machine, topic, id;
+  double yellow, red;
+  array<int, 3> col_widths{18, 15, 15};
 
   void seen() { last = chrono::system_clock::now(); }
 
-  TimingData(double timecode = 0, string m = "") {
-    machine = m;
+  TimingData(string m = "", string t = "", string i = "")
+      : machine(m), topic(t), id(i) {
     seen();
   }
 
   friend ostream &operator<<(ostream &os, const TimingData &obj) {
     auto delay = (chrono::system_clock::now() - obj.last).count() / 1.0E6;
-    os << "seen from " 
-       << setw(18) << quoted(obj.machine) << ", "
-       << setprecision(3) << scientific << delay << " s ago";
+    os << setw(obj.col_widths[0]) << obj.machine << " | "
+       << setw(obj.col_widths[1]) << obj.topic << " | "
+       << setw(obj.col_widths[2]) << obj.id << " | " << setprecision(3)
+       << scientific;
+    if (delay >= obj.red)
+      os << fg::red << delay << fg::reset;
+    else if (delay >= obj.yellow)
+      os << fg::yellow << delay << fg::reset;
+    else
+      os << fg::green << delay << fg::reset;
     return os;
   }
 };
@@ -68,24 +79,45 @@ public:
 
     if (topic == "agent_event")
       return return_type::retry;
-    cout << ESC"[1J" ESC"[H";
-    cout << "Seen " << _timings.size() << " agents:" << endl;
+    cout << ESC "[1J" ESC "[H" << style::bold << "Seen " << _timings.size()
+         << " agents:" << endl
+         << setw(_col_widths[0]) << "host" << style::reset << " | "
+         << style::bold << setw(_col_widths[1]) << "topic" << style::reset
+         << " | " << style::bold << setw(_col_widths[2]) << "agent_id"
+         << style::reset << " | " << style::bold << "elapsed (s)"
+         << style::reset << endl;
     for (const auto &[k, v] : _timings) {
-      cout << "  " << k << ": " << v << endl;
+      cout << v << endl;
     }
 
     if (_timings.count(id)) {
       _timings.at(id).seen();
     } else {
-      _timings[id] = TimingData(input.value("timecode", 0),
-                                input.value("hostname", "unknown"));
+      _timings[id] = TimingData(input.value("hostname", "unknown"), topic,
+                                input.value("agent_id", "-"));
+      _timings[id].yellow = _params["yellow"];
+      _timings[id].red = _params["red"];
+      _timings[id].col_widths = _col_widths;
     }
     return return_type::success;
   }
 
   void set_params(const json &params) override {
     Sink::set_params(params);
+    _params["yellow"] = 0.1;
+    _params["red"] = 1.0;
+    _params["col_widths"] = {18, 15, 15};
     _params.merge_patch(params);
+
+    try {
+      _col_widths[0] = _params["col_widths"][0];
+      _col_widths[1] = _params["col_widths"][1];
+      _col_widths[2] = _params["col_widths"][2];
+    } catch (const json::type_error &e) {
+      cerr << fg::red << "Settings error: col_widths must be an array of 3 ints"
+           << fg::reset << endl;
+      exit(EXIT_FAILURE);
+    }
   }
 
   // Implement this method if you want to provide additional information
@@ -93,6 +125,7 @@ public:
 
 private:
   map<string, TimingData> _timings;
+  array<int, 3> _col_widths;
 };
 
 /*

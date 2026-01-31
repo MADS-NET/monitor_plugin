@@ -36,6 +36,8 @@ if(UNIX AND NOT APPLE)
   set(LINUX TRUE)
 endif()
 
+set(CMAKE_POLICY_VERSION_MINIMUM "3.5" CACHE STRING "Compatibility with old CMake" FORCE)
+
 # DEPENDENCIES #################################################################
 include(FetchContent)
 # pugg is for the plugin system
@@ -53,7 +55,13 @@ FetchContent_Declare(json
   GIT_SHALLOW    TRUE
 )
 
-FetchContent_MakeAvailable(pugg json)
+FetchContent_Declare(rang
+    GIT_REPOSITORY https://github.com/agauniyal/rang.git
+    GIT_TAG        v3.2
+    GIT_SHALLOW    TRUE
+)
+
+FetchContent_MakeAvailable(pugg json rang)
 
 FetchContent_Populate(plugin 
   GIT_REPOSITORY https://github.com/pbosetti/mads_plugin.git
@@ -64,7 +72,10 @@ FetchContent_Populate(plugin
   BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR}/_deps/plugin-build
 )
 
-include_directories(${plugin_SOURCE_DIR}/src)
+include_directories(
+  ${plugin_SOURCE_DIR}/src
+  ${rang_SOURCE_DIR}/include
+)
 
 
 # MACROS #######################################################################

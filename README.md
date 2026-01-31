@@ -42,6 +42,7 @@ The plugin supports the following settings in the INI file:
 ```ini
 [monitor]
 silent = true
+col_widths = [18, 15, 15] # Widths of first three columns
 sub_topic = [""] # Subscribe to all topics
 ```
 
