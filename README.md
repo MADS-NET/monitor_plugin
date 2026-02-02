@@ -41,9 +41,11 @@ The plugin supports the following settings in the INI file:
 
 ```ini
 [monitor]
-silent = true
-col_widths = [18, 15, 15] # Widths of first three columns
 sub_topic = [""] # Subscribe to all topics
+col_widths = [18, 15, 15] # Widths of first three columns
+yellow = 0.1 # seconds: color yellow periods larger than that
+red = 0.1    # seconds: color red periods larger than that
+silent = true
 ```
 
 All settings are optional; if omitted, the default values are used.
