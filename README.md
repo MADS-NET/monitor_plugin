@@ -1,5 +1,7 @@
 # monitor_plugin plugin for MADS
 
+**NOTE: the `monitor.plugin` is now integrated in MADS v2. This repo is thus archived**
+
 This is a Sink plugin for [MADS](https://github.com/MADS-NET/MADS). 
 
 It keeps track of all agents publishing on the network and of how long since they have been publishing. There's of course no way to track pure sinks.
